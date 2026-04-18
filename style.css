@@ -1,0 +1,97 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #101010;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 44px;
+  padding: 64px 56px;
+  width: 100%;
+  max-width: 1400px;
+}
+
+.carousel-wrapper {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.carousel-wrapper:active {
+  cursor: grabbing;
+}
+
+.card {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  will-change: transform, filter;
+  transition:
+    transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    filter   0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ── Stack positions ── */
+.card[data-pos="0"] {
+  transform: translate(0, 0) scale(1);
+  filter: brightness(1);
+  z-index: 4;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.6);
+}
+
+.card[data-pos="1"] {
+  transform: translate(14px, 10px) scale(0.96);
+  filter: brightness(0.58);
+  z-index: 3;
+}
+
+.card[data-pos="2"] {
+  transform: translate(25px, 18px) scale(0.92);
+  filter: brightness(0.36);
+  z-index: 2;
+}
+
+.card[data-pos="3"] {
+  transform: translate(33px, 24px) scale(0.88);
+  filter: brightness(0.2);
+  z-index: 1;
+}
+
+/* Exit: flies left */
+.card[data-pos="exit"] {
+  transform: translate(-115%, -8px) scale(0.93) rotate(-5deg);
+  filter: brightness(0.65);
+  z-index: 5;
+}
+
+/* Entry: starts off-screen right (set without transition in JS) */
+.card[data-pos="entry"] {
+  transform: translate(115%, 0) scale(0.93) rotate(5deg);
+  filter: brightness(0.65);
+  z-index: 5;
+}
