@@ -20,7 +20,7 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 48px;
-      padding: 110px 56px 60px;
+      padding: 80px 56px 60px;
       width: 100%;
       max-width: 1360px;
     }
@@ -29,22 +29,21 @@
       .page-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 28px;
-        padding: 110px 28px 48px;
+        padding: 80px 28px 48px;
       }
     }
 
     @media (max-width: 420px) {
       .page-grid {
         gap: 18px;
-        padding: 110px 16px 40px;
+        padding: 80px 16px 40px;
       }
     }
 
-    /* ── Wrapper holds the card + stack-peek space above ── */
+    /* ── Wrapper holds the card + compact stack space above ── */
     .carousel-wrapper {
       position: relative;
-      /* Extra top space so the stacked cards above are visible */
-      padding-top: 90px;
+      padding-top: 56px;
       touch-action: pan-x;
       user-select: none;
       -webkit-user-select: none;
@@ -63,12 +62,11 @@
       inset: 0;
       border-radius: 20px;
       overflow: hidden;
-      /* Scale from TOP so all cards share their top edges as the anchor */
       transform-origin: top center;
       will-change: transform, filter;
       transition:
-        transform 0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
-        filter    0.42s ease-out;
+        transform 0.44s cubic-bezier(0.22, 0.61, 0.36, 1),
+        filter    0.44s ease-out;
     }
 
     .card img {
@@ -81,34 +79,34 @@
       -webkit-user-drag: none;
     }
 
-    /* ── Stack: cards peek from ABOVE, progressively smaller & darker ── */
+    /* ── Stack: compact peek from above, depth-of-field blur, fan tilt ── */
 
-    /* Front card — full size, full brightness, sits at bottom */
+    /* Front card — sharp, full brightness */
     .card[data-pos="0"] {
-      transform: translate(0, 0) scale(1);
-      filter: brightness(1);
+      transform: translate(0, 0) scale(1) rotate(0deg);
+      filter: brightness(1) blur(0px);
       z-index: 4;
-      box-shadow: 0 20px 56px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75);
     }
 
-    /* First card behind — 36 px above, 3% narrower */
+    /* 1st behind — slightly tilted left, soft blur */
     .card[data-pos="1"] {
-      transform: translate(0, -36px) scale(0.97);
-      filter: brightness(0.6);
+      transform: translate(0, -20px) scale(0.93) rotate(-1.8deg);
+      filter: brightness(0.38) blur(1.5px);
       z-index: 3;
     }
 
-    /* Second card behind */
+    /* 2nd behind — tilt right, more blur */
     .card[data-pos="2"] {
-      transform: translate(0, -64px) scale(0.94);
-      filter: brightness(0.36);
+      transform: translate(0, -34px) scale(0.87) rotate(1.2deg);
+      filter: brightness(0.22) blur(3px);
       z-index: 2;
     }
 
-    /* Third card behind — most receded */
+    /* 3rd behind — minimal size, maximum blur, very dark */
     .card[data-pos="3"] {
-      transform: translate(0, -84px) scale(0.91);
-      filter: brightness(0.18);
+      transform: translate(0, -44px) scale(0.81) rotate(-0.6deg);
+      filter: brightness(0.10) blur(5px);
       z-index: 1;
     }
   </style>
@@ -158,44 +156,46 @@
         card.querySelector('img').src = this.images[((idx % len) + len) % len];
       }
 
-      // Front card sinks to back, next rises to front
+      // New card rises first, then cascade ripples back through the stack
       next() {
         if (this.busy) return;
         this.busy = true;
 
-        // All four shift simultaneously — stays fully on-screen
-        this.pool[0].dataset.pos = '3';
-        this.pool[1].dataset.pos = '0';
-        this.pool[2].dataset.pos = '1';
-        this.pool[3].dataset.pos = '2';
+        const [c0, c1, c2, c3] = this.pool;
+        const S = 45; // stagger ms between each card
 
-        this.pool.push(this.pool.shift()); // pool[0] becomes the new front
+        c1.dataset.pos = '0';                          // new front — instant
+        setTimeout(() => c2.dataset.pos = '1', S);
+        setTimeout(() => c3.dataset.pos = '2', S * 2);
+        setTimeout(() => c0.dataset.pos = '3', S * 3); // old front sinks last
+
+        this.pool.push(this.pool.shift());
         this.current = (this.current + 1) % this.images.length;
 
-        // After animation: quietly update the now-backmost (dark) card's image
         setTimeout(() => {
           this._src(this.pool[3], this.current + 3);
           this.busy = false;
-        }, 440);
+        }, 460 + S * 3);
       }
 
-      // Reverse: back card rises to front, others recede
+      // Reverse cascade: front recedes first, back card rises last
       prev() {
         if (this.busy) return;
         this.busy = true;
 
         this.current = (this.current - 1 + this.images.length) % this.images.length;
+        this._src(this.pool[3], this.current); // dark card, flash barely visible
 
-        // Update back card's image while it's still dark (barely noticeable)
-        this._src(this.pool[3], this.current);
+        const [c0, c1, c2, c3] = this.pool;
+        const S = 45;
 
-        this.pool[0].dataset.pos = '1';
-        this.pool[1].dataset.pos = '2';
-        this.pool[2].dataset.pos = '3';
-        this.pool[3].dataset.pos = '0';
+        c0.dataset.pos = '1';
+        setTimeout(() => c1.dataset.pos = '2', S);
+        setTimeout(() => c2.dataset.pos = '3', S * 2);
+        setTimeout(() => c3.dataset.pos = '0', S * 3);
 
         this.pool.unshift(this.pool.pop());
-        setTimeout(() => (this.busy = false), 440);
+        setTimeout(() => (this.busy = false), 460 + S * 3);
       }
 
       _listen() {
@@ -224,12 +224,13 @@
 
           const f = this.pool[0];
           f.style.transition = 'none';
-          // Card follows finger, slightly shrinks as it moves up (into the stack)
           const progress = Math.min(Math.abs(this.dy) / 120, 1);
-          const sc = 1 - progress * 0.09;
-          const br = 1 - progress * 0.78;
-          f.style.transform = `translate(0, ${this.dy}px) scale(${sc})`;
-          f.style.filter = `brightness(${br})`;
+          const sc = 1 - progress * 0.19;
+          const br = 1 - progress * 0.9;
+          const bl = progress * 3;
+          const rot = this.dy * 0.018;
+          f.style.transform = `translate(0, ${this.dy}px) scale(${sc}) rotate(${rot}deg)`;
+          f.style.filter = `brightness(${br}) blur(${bl}px)`;
         });
 
         const release = () => {
