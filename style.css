@@ -25,7 +25,7 @@ body {
   position: relative;
   aspect-ratio: 3 / 4;
   cursor: grab;
-  touch-action: pan-y;
+  touch-action: pan-x;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -56,7 +56,7 @@ body {
   -webkit-user-drag: none;
 }
 
-/* ── Stack positions ── */
+/* ── Stack positions (stack peeks from top) ── */
 .card[data-pos="0"] {
   transform: translate(0, 0) scale(1);
   filter: brightness(1);
@@ -65,33 +65,33 @@ body {
 }
 
 .card[data-pos="1"] {
-  transform: translate(14px, 10px) scale(0.96);
+  transform: translate(0, -12px) scale(0.96);
   filter: brightness(0.58);
   z-index: 3;
 }
 
 .card[data-pos="2"] {
-  transform: translate(25px, 18px) scale(0.92);
+  transform: translate(0, -22px) scale(0.92);
   filter: brightness(0.36);
   z-index: 2;
 }
 
 .card[data-pos="3"] {
-  transform: translate(33px, 24px) scale(0.88);
+  transform: translate(0, -30px) scale(0.88);
   filter: brightness(0.2);
   z-index: 1;
 }
 
-/* Exit: flies left */
+/* Exit: flies up */
 .card[data-pos="exit"] {
-  transform: translate(-115%, -8px) scale(0.93) rotate(-5deg);
+  transform: translate(0, -115%) scale(0.93) rotate(4deg);
   filter: brightness(0.65);
   z-index: 5;
 }
 
-/* Entry: starts off-screen right (set without transition in JS) */
+/* Entry: starts off-screen below (set without transition in JS) */
 .card[data-pos="entry"] {
-  transform: translate(115%, 0) scale(0.93) rotate(5deg);
+  transform: translate(0, 115%) scale(0.93) rotate(-4deg);
   filter: brightness(0.65);
   z-index: 5;
 }

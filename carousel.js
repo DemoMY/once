@@ -7,8 +7,8 @@ class StackCarousel {
     this.pool = [];
     this.busy = false;
     this.live = false;
-    this.px = 0;
-    this.dx = 0;
+    this.py = 0;
+    this.dy = 0;
     this._build();
     this._listen();
   }
@@ -82,18 +82,18 @@ class StackCarousel {
     el.addEventListener('pointerdown', e => {
       if (this.busy) return;
       this.live = true;
-      this.px = e.clientX;
-      this.dx = 0;
+      this.py = e.clientY;
+      this.dy = 0;
       el.setPointerCapture(e.pointerId);
       e.preventDefault();
     });
 
     el.addEventListener('pointermove', e => {
       if (!this.live) return;
-      this.dx = e.clientX - this.px;
+      this.dy = e.clientY - this.py;
       const f = this.pool[0];
       f.style.transition = 'none';
-      f.style.transform = `translate(${this.dx}px, 0) rotate(${this.dx * 0.035}deg)`;
+      f.style.transform = `translate(0, ${this.dy}px) rotate(${this.dy * 0.02}deg)`;
     });
 
     const release = () => {
@@ -102,8 +102,8 @@ class StackCarousel {
       const f = this.pool[0];
       f.style.transition = '';
       f.style.transform = '';
-      if (this.dx < -60) this.next();
-      else if (this.dx > 60) this.prev();
+      if (this.dy < -60) this.next();
+      else if (this.dy > 60) this.prev();
     };
 
     el.addEventListener('pointerup', release);
