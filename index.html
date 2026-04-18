@@ -3,53 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stack Carousel</title>
+  <title>Culinary Cards</title>
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #101010;
+      background: #111009;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     .page-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 44px;
-      padding: 64px 56px;
+      gap: 48px;
+      padding: 110px 56px 60px;
       width: 100%;
-      max-width: 1400px;
+      max-width: 1360px;
     }
 
+    @media (max-width: 880px) {
+      .page-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 28px;
+        padding: 110px 28px 48px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .page-grid {
+        gap: 18px;
+        padding: 110px 16px 40px;
+      }
+    }
+
+    /* ── Wrapper holds the card + stack-peek space above ── */
     .carousel-wrapper {
       position: relative;
-      aspect-ratio: 3 / 4;
-      cursor: grab;
+      /* Extra top space so the stacked cards above are visible */
+      padding-top: 90px;
       touch-action: pan-x;
       user-select: none;
       -webkit-user-select: none;
+      cursor: pointer;
     }
 
-    .carousel-wrapper:active {
-      cursor: grabbing;
+    /* The actual sizing container for the card */
+    .card-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
     }
 
     .card {
       position: absolute;
       inset: 0;
-      border-radius: 18px;
+      border-radius: 20px;
       overflow: hidden;
+      /* Scale from TOP so all cards share their top edges as the anchor */
+      transform-origin: top center;
       will-change: transform, filter;
       transition:
-        transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-        filter   0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        transform 0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
+        filter    0.42s ease-out;
     }
 
     .card img {
@@ -59,76 +78,68 @@
       display: block;
       pointer-events: none;
       user-select: none;
-      -webkit-user-select: none;
       -webkit-user-drag: none;
     }
 
-    /* Stack peeks from top */
+    /* ── Stack: cards peek from ABOVE, progressively smaller & darker ── */
+
+    /* Front card — full size, full brightness, sits at bottom */
     .card[data-pos="0"] {
       transform: translate(0, 0) scale(1);
       filter: brightness(1);
       z-index: 4;
-      box-shadow: 0 22px 52px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 20px 56px rgba(0, 0, 0, 0.7);
     }
 
+    /* First card behind — 36 px above, 3% narrower */
     .card[data-pos="1"] {
-      transform: translate(0, -12px) scale(0.96);
-      filter: brightness(0.58);
+      transform: translate(0, -36px) scale(0.97);
+      filter: brightness(0.6);
       z-index: 3;
     }
 
+    /* Second card behind */
     .card[data-pos="2"] {
-      transform: translate(0, -22px) scale(0.92);
+      transform: translate(0, -64px) scale(0.94);
       filter: brightness(0.36);
       z-index: 2;
     }
 
+    /* Third card behind — most receded */
     .card[data-pos="3"] {
-      transform: translate(0, -30px) scale(0.88);
-      filter: brightness(0.2);
+      transform: translate(0, -84px) scale(0.91);
+      filter: brightness(0.18);
       z-index: 1;
-    }
-
-    /* Exit: flies up */
-    .card[data-pos="exit"] {
-      transform: translate(0, -115%) scale(0.93) rotate(4deg);
-      filter: brightness(0.65);
-      z-index: 5;
-    }
-
-    /* Entry: starts off-screen below */
-    .card[data-pos="entry"] {
-      transform: translate(0, 115%) scale(0.93) rotate(-4deg);
-      filter: brightness(0.65);
-      z-index: 5;
     }
   </style>
 </head>
 <body>
   <div class="page-grid">
-    <div class="carousel-wrapper"></div>
-    <div class="carousel-wrapper"></div>
-    <div class="carousel-wrapper"></div>
-    <div class="carousel-wrapper"></div>
+    <div class="carousel-wrapper"><div class="card-stage"></div></div>
+    <div class="carousel-wrapper"><div class="card-stage"></div></div>
+    <div class="carousel-wrapper"><div class="card-stage"></div></div>
+    <div class="carousel-wrapper"><div class="card-stage"></div></div>
   </div>
 
   <script>
     class StackCarousel {
-      constructor(el, images) {
-        this.el = el;
+      constructor(stage, images) {
+        this.stage = stage;
         this.images = images;
         this.N = 4;
         this.current = 0;
-        this.pool = [];
+        this.pool = [];   // pool[0] = front card
         this.busy = false;
         this.live = false;
         this.py = 0;
         this.dy = 0;
+
         this._build();
         this._listen();
       }
 
       _build() {
+        // Append from back to front so DOM z-order matches visual
         for (let i = this.N - 1; i >= 0; i--) {
           const div = document.createElement('div');
           div.className = 'card';
@@ -136,7 +147,7 @@
           img.src = this.images[i % this.images.length];
           img.alt = '';
           div.appendChild(img);
-          this.el.appendChild(div);
+          this.stage.appendChild(div);
           this.pool.unshift(div);
         }
         this.pool.forEach((c, i) => (c.dataset.pos = i));
@@ -147,94 +158,108 @@
         card.querySelector('img').src = this.images[((idx % len) + len) % len];
       }
 
+      // Front card sinks to back, next rises to front
       next() {
         if (this.busy) return;
         this.busy = true;
 
-        const front = this.pool[0];
-        front.dataset.pos = 'exit';
-        for (let i = 1; i < this.N; i++) this.pool[i].dataset.pos = i - 1;
+        // All four shift simultaneously — stays fully on-screen
+        this.pool[0].dataset.pos = '3';
+        this.pool[1].dataset.pos = '0';
+        this.pool[2].dataset.pos = '1';
+        this.pool[3].dataset.pos = '2';
 
+        this.pool.push(this.pool.shift()); // pool[0] becomes the new front
+        this.current = (this.current + 1) % this.images.length;
+
+        // After animation: quietly update the now-backmost (dark) card's image
         setTimeout(() => {
-          this.current = (this.current + 1) % this.images.length;
-          this._src(front, this.current + this.N - 1);
-          this.pool.push(this.pool.shift());
-
-          const back = this.pool[this.N - 1];
-          back.style.transition = 'none';
-          back.dataset.pos = String(this.N - 1);
-          requestAnimationFrame(() => requestAnimationFrame(() => {
-            back.style.transition = '';
-            this.busy = false;
-          }));
-        }, 560);
+          this._src(this.pool[3], this.current + 3);
+          this.busy = false;
+        }, 440);
       }
 
+      // Reverse: back card rises to front, others recede
       prev() {
         if (this.busy) return;
         this.busy = true;
 
         this.current = (this.current - 1 + this.images.length) % this.images.length;
 
-        const back = this.pool[this.N - 1];
-        this._src(back, this.current);
-        for (let i = 0; i < this.N - 1; i++) this.pool[i].dataset.pos = i + 1;
+        // Update back card's image while it's still dark (barely noticeable)
+        this._src(this.pool[3], this.current);
 
-        back.style.transition = 'none';
-        back.dataset.pos = 'entry';
+        this.pool[0].dataset.pos = '1';
+        this.pool[1].dataset.pos = '2';
+        this.pool[2].dataset.pos = '3';
+        this.pool[3].dataset.pos = '0';
+
         this.pool.unshift(this.pool.pop());
-
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          back.style.transition = '';
-          back.dataset.pos = '0';
-          setTimeout(() => (this.busy = false), 560);
-        }));
+        setTimeout(() => (this.busy = false), 440);
       }
 
       _listen() {
-        const el = this.el;
+        const wrapper = this.stage.parentElement;
 
-        el.addEventListener('pointerdown', e => {
+        // Tap = next
+        wrapper.addEventListener('click', () => {
+          if (Math.abs(this.dy) < 8) this.next();
+        });
+
+        wrapper.addEventListener('pointerdown', e => {
           if (this.busy) return;
           this.live = true;
           this.py = e.clientY;
           this.dy = 0;
-          el.setPointerCapture(e.pointerId);
+          wrapper.setPointerCapture(e.pointerId);
           e.preventDefault();
         });
 
-        el.addEventListener('pointermove', e => {
+        wrapper.addEventListener('pointermove', e => {
           if (!this.live) return;
           this.dy = e.clientY - this.py;
+
+          // Live drag only for upward swipe (matches next-card direction)
+          if (this.dy >= 0) return;
+
           const f = this.pool[0];
           f.style.transition = 'none';
-          f.style.transform = `translate(0, ${this.dy}px) rotate(${this.dy * 0.02}deg)`;
+          // Card follows finger, slightly shrinks as it moves up (into the stack)
+          const progress = Math.min(Math.abs(this.dy) / 120, 1);
+          const sc = 1 - progress * 0.09;
+          const br = 1 - progress * 0.78;
+          f.style.transform = `translate(0, ${this.dy}px) scale(${sc})`;
+          f.style.filter = `brightness(${br})`;
         });
 
         const release = () => {
           if (!this.live) return;
           this.live = false;
+
           const f = this.pool[0];
           f.style.transition = '';
           f.style.transform = '';
-          if (this.dy < -60) this.next();
-          else if (this.dy > 60) this.prev();
+          f.style.filter = '';
+
+          if (this.dy < -55) this.next();
+          else if (this.dy > 55) this.prev();
         };
 
-        el.addEventListener('pointerup', release);
-        el.addEventListener('pointercancel', release);
+        wrapper.addEventListener('pointerup', release);
+        wrapper.addEventListener('pointercancel', release);
       }
     }
 
+    // ── 4 stacks of culinary images ──────────────────────────────
     const SETS = [
-      ['alpine1','alpine2','alpine3','alpine4','alpine5','alpine6'],
-      ['ocean7','ocean8','ocean9','ocean10','ocean11','ocean12'],
-      ['city13','city14','city15','city16','city17','city18'],
-      ['forest19','forest20','forest21','forest22','forest23','forest24'],
-    ].map(seeds => seeds.map(s => `https://picsum.photos/seed/${s}/400/560`));
+      ['pasta1','risotto2','soup3','salad4','pizza5','steak6'],
+      ['cake7','bread8','sushi9','burger10','tacos11','ramen12'],
+      ['bowl13','curry14','grilled15','dessert16','wrap17','noodles18'],
+      ['brunch19','smoothie20','tartine21','seafood22','roast23','crepe24'],
+    ].map(seeds => seeds.map(s => `https://picsum.photos/seed/${s}/480/640`));
 
-    document.querySelectorAll('.carousel-wrapper').forEach((el, i) => {
-      new StackCarousel(el, SETS[i]);
+    document.querySelectorAll('.card-stage').forEach((stage, i) => {
+      new StackCarousel(stage, SETS[i]);
     });
   </script>
 </body>
