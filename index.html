@@ -26,37 +26,27 @@
     }
 
     @media (max-width: 880px) {
-      .page-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 28px;
-        padding: 80px 28px 48px;
-      }
+      .page-grid { grid-template-columns: repeat(2, 1fr); gap: 28px; padding: 80px 28px 48px; }
     }
-
     @media (max-width: 420px) {
-      .page-grid {
-        gap: 18px;
-        padding: 80px 16px 40px;
-      }
+      .page-grid { gap: 18px; padding: 80px 16px 40px; }
     }
 
-    /* ── Wrapper holds the card + compact stack space above ── */
     .carousel-wrapper {
       position: relative;
       padding-top: 56px;
       touch-action: pan-x;
       user-select: none;
       -webkit-user-select: none;
-      cursor: pointer;
     }
 
-    /* The actual sizing container for the card */
     .card-stage {
       position: relative;
       width: 100%;
       aspect-ratio: 3 / 4;
     }
 
+    /* ── Card ── */
     .card {
       position: absolute;
       inset: 0;
@@ -67,51 +57,198 @@
       transition:
         transform 0.44s cubic-bezier(0.22, 0.61, 0.36, 1),
         filter    0.44s ease-out;
+      cursor: pointer;
     }
 
-    .card img {
-      width: 100%;
-      height: 100%;
+    .card-img {
+      width: 100%; height: 100%;
       object-fit: cover;
       display: block;
       pointer-events: none;
-      user-select: none;
-      -webkit-user-drag: none;
+      background: #2a2218;
     }
 
-    /* ── Stack: compact peek from above, depth-of-field blur, fan tilt ── */
-
-    /* Front card — sharp, full brightness */
+    /* ── Stack positions (compact, blurred, fanned) ── */
     .card[data-pos="0"] {
-      transform: translate(0, 0) scale(1) rotate(0deg);
+      transform: translate(0,0) scale(1) rotate(0deg);
       filter: brightness(1) blur(0px);
       z-index: 4;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.75);
     }
-
-    /* 1st behind — slightly tilted left, soft blur */
     .card[data-pos="1"] {
-      transform: translate(0, -20px) scale(0.93) rotate(-1.8deg);
+      transform: translate(0,-20px) scale(0.93) rotate(-1.8deg);
       filter: brightness(0.38) blur(1.5px);
       z-index: 3;
     }
-
-    /* 2nd behind — tilt right, more blur */
     .card[data-pos="2"] {
-      transform: translate(0, -34px) scale(0.87) rotate(1.2deg);
+      transform: translate(0,-34px) scale(0.87) rotate(1.2deg);
       filter: brightness(0.22) blur(3px);
       z-index: 2;
     }
-
-    /* 3rd behind — minimal size, maximum blur, very dark */
     .card[data-pos="3"] {
-      transform: translate(0, -44px) scale(0.81) rotate(-0.6deg);
+      transform: translate(0,-44px) scale(0.81) rotate(-0.6deg);
       filter: brightness(0.10) blur(5px);
       z-index: 1;
+    }
+
+    /* ── Text overlay (bottom gradient) ── */
+    .card-body {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 52px 14px 14px;
+      background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%);
+      border-radius: 0 0 20px 20px;
+      touch-action: auto;
+      pointer-events: none; /* disabled on back cards */
+    }
+
+    .card[data-pos="0"] .card-body {
+      pointer-events: all;
+    }
+
+    .card-title, .card-desc {
+      outline: none;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    .card-title {
+      color: #fff;
+      font-size: clamp(13px, 2.8vw, 16px);
+      font-weight: 600;
+      line-height: 1.3;
+      min-height: 1.3em;
+      border-radius: 4px;
+      padding: 2px 3px;
+      margin: -2px -3px;
+      transition: background 0.15s;
+    }
+    .card-title:focus { background: rgba(255,255,255,0.12); }
+
+    .card-desc {
+      color: rgba(255,255,255,0.62);
+      font-size: clamp(11px, 2vw, 13px);
+      margin-top: 5px;
+      line-height: 1.4;
+      min-height: 1.4em;
+      border-radius: 4px;
+      padding: 2px 3px;
+      margin-left: -3px;
+      transition: background 0.15s;
+    }
+    .card-desc:focus { background: rgba(255,255,255,0.08); }
+
+    /* Placeholder for empty contenteditable */
+    .card-title[data-empty="1"]::before {
+      content: attr(data-ph);
+      color: rgba(255,255,255,0.28);
+      pointer-events: none;
+    }
+    .card-desc[data-empty="1"]::before {
+      content: attr(data-ph);
+      color: rgba(255,255,255,0.2);
+      pointer-events: none;
+    }
+
+    /* ── Camera / replace-image button ── */
+    .btn-img {
+      position: absolute;
+      top: 11px; right: 11px;
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.52);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s, transform 0.15s;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* show on front card */
+    .card[data-pos="0"] .btn-img {
+      pointer-events: all;
+    }
+    .card[data-pos="0"]:hover .btn-img { opacity: 1; }
+    /* always visible on touch screens */
+    @media (hover: none) {
+      .card[data-pos="0"] .btn-img { opacity: 0.82; }
+    }
+    .btn-img:active { transform: scale(0.9); }
+
+    /* ── Lightbox ── */
+    .lb {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease;
+    }
+    .lb.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .lb-bg {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.93);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .lb-img {
+      position: relative;
+      max-width: min(88vw, 500px);
+      max-height: 86vh;
+      object-fit: contain;
+      border-radius: 18px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.85);
+      transform: scale(0.86);
+      transition: transform 0.36s cubic-bezier(0.34, 1.18, 0.64, 1);
+    }
+    .lb.open .lb-img { transform: scale(1); }
+
+    .lb-close {
+      position: absolute;
+      top: 18px; right: 18px;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.11);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #fff;
+      font-size: 19px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .lb-close:hover { background: rgba(255,255,255,0.22); }
+
+    /* swipe-down hint in lightbox */
+    .lb-hint {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.3);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
+
   <div class="page-grid">
     <div class="carousel-wrapper"><div class="card-stage"></div></div>
     <div class="carousel-wrapper"><div class="card-stage"></div></div>
@@ -119,149 +256,293 @@
     <div class="carousel-wrapper"><div class="card-stage"></div></div>
   </div>
 
+  <!-- Shared lightbox -->
+  <div class="lb" id="lb">
+    <div class="lb-bg" id="lb-bg"></div>
+    <img class="lb-img" id="lb-img" alt="">
+    <button class="lb-close" id="lb-close">✕</button>
+    <span class="lb-hint">свайп вниз — закрыть</span>
+  </div>
+
+  <!-- Hidden file input for replacing images -->
+  <input type="file" id="file-inp" accept="image/*" style="display:none">
+
   <script>
-    class StackCarousel {
-      constructor(stage, images) {
-        this.stage = stage;
-        this.images = images;
-        this.N = 4;
-        this.current = 0;
-        this.pool = [];   // pool[0] = front card
-        this.busy = false;
-        this.live = false;
-        this.py = 0;
-        this.dy = 0;
+  // ── Lightbox ────────────────────────────────────────────────────
+  const lb      = document.getElementById('lb');
+  const lbImg   = document.getElementById('lb-img');
+  let lbStartY  = 0;
 
-        this._build();
-        this._listen();
-      }
+  function openLightbox(src) {
+    lbImg.src = src;
+    lb.classList.add('open');
+  }
+  function closeLightbox() {
+    lb.classList.remove('open');
+  }
 
-      _build() {
-        // Append from back to front so DOM z-order matches visual
-        for (let i = this.N - 1; i >= 0; i--) {
-          const div = document.createElement('div');
-          div.className = 'card';
-          const img = document.createElement('img');
-          img.src = this.images[i % this.images.length];
-          img.alt = '';
-          div.appendChild(img);
-          this.stage.appendChild(div);
-          this.pool.unshift(div);
-        }
-        this.pool.forEach((c, i) => (c.dataset.pos = i));
-      }
+  document.getElementById('lb-bg').addEventListener('click', closeLightbox);
+  document.getElementById('lb-close').addEventListener('click', closeLightbox);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-      _src(card, idx) {
-        const len = this.images.length;
-        card.querySelector('img').src = this.images[((idx % len) + len) % len];
-      }
+  // swipe-down to close lightbox
+  lb.addEventListener('pointerdown', e => { lbStartY = e.clientY; });
+  lb.addEventListener('pointerup',   e => { if (e.clientY - lbStartY > 65) closeLightbox(); });
 
-      // New card rises first, then cascade ripples back through the stack
-      next() {
-        if (this.busy) return;
-        this.busy = true;
+  // ── File input ──────────────────────────────────────────────────
+  const fileInp   = document.getElementById('file-inp');
+  let pendingImgEl  = null;
+  let pendingData   = null; // { arr, idx }
 
-        const [c0, c1, c2, c3] = this.pool;
-        const S = 45; // stagger ms between each card
+  fileInp.addEventListener('change', () => {
+    const file = fileInp.files[0];
+    if (!file || !pendingImgEl) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      pendingImgEl.src = ev.target.result;
+      if (pendingData) pendingData.arr[pendingData.idx].src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    fileInp.value = '';
+  });
 
-        c1.dataset.pos = '0';                          // new front — instant
-        setTimeout(() => c2.dataset.pos = '1', S);
-        setTimeout(() => c3.dataset.pos = '2', S * 2);
-        setTimeout(() => c0.dataset.pos = '3', S * 3); // old front sinks last
-
-        this.pool.push(this.pool.shift());
-        this.current = (this.current + 1) % this.images.length;
-
-        setTimeout(() => {
-          this._src(this.pool[3], this.current + 3);
-          this.busy = false;
-        }, 460 + S * 3);
-      }
-
-      // Reverse cascade: front recedes first, back card rises last
-      prev() {
-        if (this.busy) return;
-        this.busy = true;
-
-        this.current = (this.current - 1 + this.images.length) % this.images.length;
-        this._src(this.pool[3], this.current); // dark card, flash barely visible
-
-        const [c0, c1, c2, c3] = this.pool;
-        const S = 45;
-
-        c0.dataset.pos = '1';
-        setTimeout(() => c1.dataset.pos = '2', S);
-        setTimeout(() => c2.dataset.pos = '3', S * 2);
-        setTimeout(() => c3.dataset.pos = '0', S * 3);
-
-        this.pool.unshift(this.pool.pop());
-        setTimeout(() => (this.busy = false), 460 + S * 3);
-      }
-
-      _listen() {
-        const wrapper = this.stage.parentElement;
-
-        // Tap = next
-        wrapper.addEventListener('click', () => {
-          if (Math.abs(this.dy) < 8) this.next();
-        });
-
-        wrapper.addEventListener('pointerdown', e => {
-          if (this.busy) return;
-          this.live = true;
-          this.py = e.clientY;
-          this.dy = 0;
-          wrapper.setPointerCapture(e.pointerId);
-          e.preventDefault();
-        });
-
-        wrapper.addEventListener('pointermove', e => {
-          if (!this.live) return;
-          this.dy = e.clientY - this.py;
-
-          // Live drag only for upward swipe (matches next-card direction)
-          if (this.dy >= 0) return;
-
-          const f = this.pool[0];
-          f.style.transition = 'none';
-          const progress = Math.min(Math.abs(this.dy) / 120, 1);
-          const sc = 1 - progress * 0.19;
-          const br = 1 - progress * 0.9;
-          const bl = progress * 3;
-          const rot = this.dy * 0.018;
-          f.style.transform = `translate(0, ${this.dy}px) scale(${sc}) rotate(${rot}deg)`;
-          f.style.filter = `brightness(${br}) blur(${bl}px)`;
-        });
-
-        const release = () => {
-          if (!this.live) return;
-          this.live = false;
-
-          const f = this.pool[0];
-          f.style.transition = '';
-          f.style.transform = '';
-          f.style.filter = '';
-
-          if (this.dy < -55) this.next();
-          else if (this.dy > 55) this.prev();
-        };
-
-        wrapper.addEventListener('pointerup', release);
-        wrapper.addEventListener('pointercancel', release);
-      }
+  // ── StackCarousel ───────────────────────────────────────────────
+  class StackCarousel {
+    constructor(stage, data) {
+      this.stage   = stage;
+      this.data    = data;   // [{ src, title, desc }, ...]
+      this.N       = 4;
+      this.current = 0;
+      this.pool    = [];
+      this.busy    = false;
+      this.live    = false;
+      this.py      = 0;
+      this.dy      = 0;
+      this._build();
+      this._listen();
     }
 
-    // ── 4 stacks of culinary images ──────────────────────────────
-    const SETS = [
-      ['pasta1','risotto2','soup3','salad4','pizza5','steak6'],
-      ['cake7','bread8','sushi9','burger10','tacos11','ramen12'],
-      ['bowl13','curry14','grilled15','dessert16','wrap17','noodles18'],
-      ['brunch19','smoothie20','tartine21','seafood22','roast23','crepe24'],
-    ].map(seeds => seeds.map(s => `https://picsum.photos/seed/${s}/480/640`));
+    _build() {
+      for (let i = this.N - 1; i >= 0; i--) {
+        const card = this._makeCard(i % this.data.length);
+        this.stage.appendChild(card);
+        this.pool.unshift(card);
+      }
+      this.pool.forEach((c, i) => (c.dataset.pos = i));
+    }
 
-    document.querySelectorAll('.card-stage').forEach((stage, i) => {
-      new StackCarousel(stage, SETS[i]);
-    });
+    _makeCard(dataIdx) {
+      const d    = this.data[dataIdx];
+      const card = document.createElement('div');
+      card.className  = 'card';
+      card.dataset.dataIdx = dataIdx;
+
+      // Image
+      const img = document.createElement('img');
+      img.src   = d.src;
+      img.className = 'card-img';
+      img.alt   = '';
+      card.appendChild(img);
+
+      // Camera button
+      const btn = document.createElement('button');
+      btn.className = 'btn-img';
+      btn.innerHTML = '&#x1F4F7;';
+      btn.title = 'Заменить фото';
+      card.appendChild(btn);
+
+      // Text body
+      const body  = document.createElement('div');
+      body.className = 'card-body';
+
+      const mkField = (cls, val, ph) => {
+        const el = document.createElement('div');
+        el.className = cls;
+        el.contentEditable = 'true';
+        el.dataset.ph    = ph;
+        el.dataset.empty = val ? '0' : '1';
+        el.textContent   = val || '';
+        // update placeholder flag on input
+        el.addEventListener('input', () => {
+          el.dataset.empty = el.textContent.trim() ? '0' : '1';
+        });
+        // save on blur
+        el.addEventListener('blur', () => {
+          const i = parseInt(card.dataset.dataIdx);
+          const key = cls === 'card-title' ? 'title' : 'desc';
+          this.data[i][key] = el.textContent.trim();
+          el.dataset.empty = el.textContent.trim() ? '0' : '1';
+        });
+        // prevent swipe gesture from firing when editing text
+        el.addEventListener('pointerdown', e => e.stopPropagation());
+        el.addEventListener('click',       e => e.stopPropagation());
+        return el;
+      };
+
+      body.appendChild(mkField('card-title', d.title, 'Название блюда'));
+      body.appendChild(mkField('card-desc',  d.desc,  'Описание рецепта'));
+      card.appendChild(body);
+
+      // Camera button → file picker
+      btn.addEventListener('pointerdown', e => e.stopPropagation());
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        pendingImgEl = img;
+        pendingData  = { arr: this.data, idx: parseInt(card.dataset.dataIdx) };
+        fileInp.click();
+      });
+
+      return card;
+    }
+
+    // Update card's image + text from data array (called when card is recycled to back)
+    _src(card, idx) {
+      const curIdx = parseInt(card.dataset.dataIdx);
+      // Save any unsaved edits first
+      if (!isNaN(curIdx)) {
+        this.data[curIdx].title = card.querySelector('.card-title').textContent.trim();
+        this.data[curIdx].desc  = card.querySelector('.card-desc').textContent.trim();
+      }
+      const len = this.data.length;
+      const i   = ((idx % len) + len) % len;
+      const d   = this.data[i];
+      card.querySelector('.card-img').src  = d.src;
+      const titleEl = card.querySelector('.card-title');
+      const descEl  = card.querySelector('.card-desc');
+      titleEl.textContent   = d.title || '';
+      titleEl.dataset.empty = d.title ? '0' : '1';
+      descEl.textContent    = d.desc  || '';
+      descEl.dataset.empty  = d.desc  ? '0' : '1';
+      card.dataset.dataIdx  = i;
+    }
+
+    // Cascade: new card rises first, old front sinks last
+    next() {
+      if (this.busy) return;
+      this.busy = true;
+      const [c0, c1, c2, c3] = this.pool;
+      const S = 45;
+      c1.dataset.pos = '0';
+      setTimeout(() => c2.dataset.pos = '1', S);
+      setTimeout(() => c3.dataset.pos = '2', S * 2);
+      setTimeout(() => c0.dataset.pos = '3', S * 3);
+      this.pool.push(this.pool.shift());
+      this.current = (this.current + 1) % this.data.length;
+      setTimeout(() => {
+        this._src(this.pool[3], this.current + 3);
+        this.busy = false;
+      }, 460 + S * 3);
+    }
+
+    prev() {
+      if (this.busy) return;
+      this.busy = true;
+      this.current = (this.current - 1 + this.data.length) % this.data.length;
+      this._src(this.pool[3], this.current);
+      const [c0, c1, c2, c3] = this.pool;
+      const S = 45;
+      c0.dataset.pos = '1';
+      setTimeout(() => c1.dataset.pos = '2', S);
+      setTimeout(() => c2.dataset.pos = '3', S * 2);
+      setTimeout(() => c3.dataset.pos = '0', S * 3);
+      this.pool.unshift(this.pool.pop());
+      setTimeout(() => (this.busy = false), 460 + S * 3);
+    }
+
+    _listen() {
+      const wrapper = this.stage.parentElement;
+
+      // Tap card (not text, not button) → lightbox for front card
+      wrapper.addEventListener('click', e => {
+        if (Math.abs(this.dy) > 8) return;
+        if (e.target.closest('.card-body')) return;
+        if (e.target.closest('.btn-img'))  return;
+        openLightbox(this.pool[0].querySelector('.card-img').src);
+      });
+
+      // Arrow keys when wrapper is focused
+      wrapper.setAttribute('tabindex', '0');
+      wrapper.addEventListener('keydown', e => {
+        if (e.key === 'ArrowUp'   || e.key === 'ArrowRight') this.next();
+        if (e.key === 'ArrowDown' || e.key === 'ArrowLeft')  this.prev();
+      });
+
+      // Pointer / swipe
+      wrapper.addEventListener('pointerdown', e => {
+        if (this.busy) return;
+        if (e.target.closest('.card-body')) return;
+        if (e.target.closest('.btn-img'))  return;
+        this.live = true;
+        this.py   = e.clientY;
+        this.dy   = 0;
+        wrapper.setPointerCapture(e.pointerId);
+      });
+
+      wrapper.addEventListener('pointermove', e => {
+        if (!this.live) return;
+        this.dy = e.clientY - this.py;
+        if (this.dy >= 0) return; // only upward drag previewed
+        const f  = this.pool[0];
+        f.style.transition = 'none';
+        const p  = Math.min(Math.abs(this.dy) / 120, 1);
+        f.style.transform = `translate(0,${this.dy}px) scale(${1 - p * 0.19}) rotate(${this.dy * 0.018}deg)`;
+        f.style.filter    = `brightness(${1 - p * 0.9}) blur(${p * 3}px)`;
+      });
+
+      const release = () => {
+        if (!this.live) return;
+        this.live = false;
+        const f = this.pool[0];
+        f.style.transition = '';
+        f.style.transform  = '';
+        f.style.filter     = '';
+        if      (this.dy < -55) this.next();
+        else if (this.dy >  55) this.prev();
+      };
+      wrapper.addEventListener('pointerup',     release);
+      wrapper.addEventListener('pointercancel', release);
+    }
+  }
+
+  // ── Data ────────────────────────────────────────────────────────
+  const SETS = [
+    [
+      { src:'https://picsum.photos/seed/pasta1/480/640',   title:'Паста Карбонара',    desc:'20 мин · 2 порции' },
+      { src:'https://picsum.photos/seed/risotto2/480/640', title:'Ризотто с грибами',  desc:'35 мин · 4 порции' },
+      { src:'https://picsum.photos/seed/soup3/480/640',    title:'Крем-суп из тыквы',  desc:'25 мин · 4 порции' },
+      { src:'https://picsum.photos/seed/salad4/480/640',   title:'Салат Цезарь',       desc:'15 мин · 2 порции' },
+      { src:'https://picsum.photos/seed/pizza5/480/640',   title:'Пицца Маргарита',    desc:'40 мин · 3 порции' },
+      { src:'https://picsum.photos/seed/steak6/480/640',   title:'Стейк Рибай',        desc:'15 мин · 1 порция'  },
+    ],
+    [
+      { src:'https://picsum.photos/seed/cake7/480/640',    title:'Шоколадный торт',    desc:'60 мин · 8 порций' },
+      { src:'https://picsum.photos/seed/bread8/480/640',   title:'Домашний хлеб',      desc:'90 мин · 1 буханка'},
+      { src:'https://picsum.photos/seed/sushi9/480/640',   title:'Суши Роллы',         desc:'45 мин · 4 порции' },
+      { src:'https://picsum.photos/seed/burger10/480/640', title:'Бургер Классик',     desc:'20 мин · 2 порции' },
+      { src:'https://picsum.photos/seed/tacos11/480/640',  title:'Тако с курицей',     desc:'25 мин · 4 порции' },
+      { src:'https://picsum.photos/seed/ramen12/480/640',  title:'Рамен Tonkotsu',     desc:'2 часа · 2 порции' },
+    ],
+    [
+      { src:'https://picsum.photos/seed/bowl13/480/640',   title:'Боул с тофу',        desc:'20 мин · 1 порция'  },
+      { src:'https://picsum.photos/seed/curry14/480/640',  title:'Карри с овощами',    desc:'30 мин · 4 порции' },
+      { src:'https://picsum.photos/seed/grilled15/480/640',title:'Гриль-микс',         desc:'25 мин · 2 порции' },
+      { src:'https://picsum.photos/seed/dessert16/480/640',title:'Тирамису',           desc:'4 часа · 6 порций' },
+      { src:'https://picsum.photos/seed/wrap17/480/640',   title:'Шаурма с говядиной', desc:'20 мин · 2 порции' },
+      { src:'https://picsum.photos/seed/noodles18/480/640',title:'Пад Тай',            desc:'15 мин · 2 порции' },
+    ],
+    [
+      { src:'https://picsum.photos/seed/brunch19/480/640', title:'Яйца Бенедикт',     desc:'20 мин · 2 порции' },
+      { src:'https://picsum.photos/seed/smoo20/480/640',   title:'Смузи Боул',         desc:'10 мин · 1 порция'  },
+      { src:'https://picsum.photos/seed/tart21/480/640',   title:'Тартин с лососем',   desc:'10 мин · 2 порции' },
+      { src:'https://picsum.photos/seed/sea22/480/640',    title:'Морской коктейль',   desc:'30 мин · 4 порции' },
+      { src:'https://picsum.photos/seed/roast23/480/640',  title:'Запечённая утка',    desc:'2 часа · 6 порций' },
+      { src:'https://picsum.photos/seed/crepe24/480/640',  title:'Крепы Сюзет',        desc:'30 мин · 4 порции' },
+    ],
+  ];
+
+  document.querySelectorAll('.card-stage').forEach((stage, i) => {
+    new StackCarousel(stage, SETS[i]);
+  });
   </script>
 </body>
 </html>
